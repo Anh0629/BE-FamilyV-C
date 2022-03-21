@@ -23,7 +23,7 @@ router.get(`/:id`, async (req, res) => {
 
     if (!order) {
         res.status(500).json({ success: false })
-    }A
+    }
     res.send(order)
 });
 
@@ -60,7 +60,6 @@ const orderItermsIDs= Promise.all(req.body.orderIterms.map(async orderIterm=>{
         profile:req.body.profile,
     })
     order = await order.save()
-
     if (!order) 
     return res.status(404).send({status: false, message:'Không tồn tại !'})
 

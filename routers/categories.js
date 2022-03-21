@@ -51,7 +51,8 @@ router.delete('/:id', (req, res) => {
             if (Category) {
                 return res
                     .status(200)
-                    .json({ success: true, message: 'Category đã được xoá ~' })
+                    .json({ success: true,
+                             message: 'Category đã được xoá ~' })
             } else {
                 return res
                     .status(404)

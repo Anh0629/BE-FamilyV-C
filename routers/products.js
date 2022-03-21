@@ -7,21 +7,36 @@ const { Category } = require('../modes/category')
 // req: request res: response
 router.get(`/`, async (req, res) => {
     const productList = await product.find().populate('category')
-
     if (!productList) {
         res.status(500).json({ success: false })
     }
     res.send(productList)
-})
-router.get(`/:id`, async (req, res) => {
+});
+
+
+router.get(`/:id`, async (req, res) =>{
     const Product = await product.findById(req.params.id).populate('category')
 
     if (!Product) {
-        res.status(500).json({ success: false })
+        return res.status(500).json({ success: false })
     }
 
     res.send(Product)
 })
+
+router.get(`/category/:id`, async(req,res)=>{
+    const Pd = await Category.findById(req.params.id)
+    console.log(Pd)
+    const a = await product.findById()
+    if( a == Pd)
+    {
+        return res.send(list);
+    }
+   
+     
+     
+});
+
 router.post(`/`, async (req, res) => {
     try {
         const category= await Category.findById(req.body.category);

@@ -1,33 +1,49 @@
 const express = require('express');
+const req = require('express/lib/request');
+const res = require('express/lib/response');
 const router = express.Router();
 const { User } = require('../modes/user');
 
-router.get(`/`, async (req, res) => {
+
+router.get(`/`, async (req,res) => {
     const userList = await User.find();
-
-    if (!userList) {
-        return res.status(500).json({ success: false });
-    }
-
     res.send(userList);
-});
-
-
+  });
 router.get(`/:id`, async (req, res) => {
-    const userList = await User.findById(req.params.id);
-
-    if (!userList) {
+    const user = await User.findById(req.params.id);
+    if (!user) {
         return res.status(500).json(
           { status: false , 
-            message:"không tìm thấy theo ID", 
+            message:"Id Not Found!", 
             data:{id: null}
           });
-    }           
-    res.send(userList);
+    }  
+    if(user){
+      res.send(user);
+    }      
 });
 
+// cap nhat 
+router.patch(`/:email`, async(req,res ) => {
+  const user = await User.findOne({ email: req.params.email});
+
+  if(!user) {
+    return res.json({message: "khong tim thấy user", success: false, status: false})
+  }else if(req.body.currentPassword != user.passwordHash)
+  {
+    
+    return res.json({message: 'Curent Password không đúng'})
+  }
+    user.passwordHash = req.body.password
+      user.save();
+      res.send(user);
+  });
+
+
 router.delete(`/delete/:id`, async (req, res) => {
+  // Da await thi khong xai then trong nay
     await User.findByIdAndRemove(req.params.id).then((user) => {
+      // Dua het cai nay ra ngoai
         if (user) {
             return res.status(200).json({ Success: true, Message: 'The User Has Been Deleted!' });
         } else {
@@ -39,26 +55,38 @@ router.delete(`/delete/:id`, async (req, res) => {
 });
     
 
-// cap nhat 
-router.patch(`/:email`, async(req,res ) => {
-const user = await User.findOneAndUpdate(
-    req.params.email,
-    {
-        passwordHash: req.body.passwordHash,
-    });
+router.post(`/create`, async(req, res)=>{
+  try {
+    const user = await User.findOne({email: req.body.email})
+    console.log(user)
+    if(user == null){
+      const newUser = new User({
+        username : req.body.username,
+        email: req.body.email,
+        passwordHash: req.body.password,
+        isAdmin: req.body.isAdmin
+      })
+      await newUser.save();
+      res.send(newUser)
+    }else{
+      return res.json({success: false})
+    }
+  } catch (err) {
+    return res.json({message: err.message , success: false })
+    }
+  });
 
-    if(!user)
-        return res.status(404).send('Không thể sửa passwordHash');
 
-    res.send(user);
-});
 
 router.post(`/register`, async (req, res) => {
-    User.findOne({ email: req.body.email }, (err, user) => {
+  
+  // Xai promise, khong xai callback lẫn lộn trong này 
+    User.findOne({ email: req.body.email }, (err, user) => { // Cái này là callback, nên dùng await
     if (err) {
       return res.status(500).json({ error: err.message });
     } 
     else {
+     
       if (user == null) {
           
         const user = new User({
@@ -68,6 +96,7 @@ router.post(`/register`, async (req, res) => {
           isAdmin: req.body.isAdmin,
         });
 
+        // Cái này nên xài await, không xài then
         user
           .save()
           .then(() => {
@@ -77,6 +106,7 @@ router.post(`/register`, async (req, res) => {
             res.status(403).json({ success: false, message: err.message });
           });
       } else {
+        // status nên là > 400 < 500
             return res.json({ status: false, message: "Email has been already" });
       }
     }
@@ -85,13 +115,12 @@ router.post(`/register`, async (req, res) => {
 
 //Post User - Login
 router.post(`/login`, async (req, res) => {
+  // try này vô ngĩa, tại vì không dùng async await thì không try catch được
     try {
-        // const secret = process.env.secret;
-    
         User.findOne(
           { $or: [{ email: req.body.email }, { username: req.body.username }] },
           (err, user) => {
-            if (err) {
+            if (err) { // Lỗi nó nhảy vào đây, nó không nhảy vào try/catch
               return res.json({ status: false, message: err.message });
             } else {
               if (user === null) {
@@ -120,7 +149,8 @@ router.post(`/login`, async (req, res) => {
                     data: {
                       id: user._id,
                       isAdmin: user.isAdmin,
-                      username : user.username
+                      username : user.username,
+                      email: user.email
                     }
                   });
                 } else {
@@ -130,7 +160,8 @@ router.post(`/login`, async (req, res) => {
                     data: {
                       id: user._id,
                       isAdmin: user.isAdmin,
-                      username : user.username
+                      username : user.username,
+                      email: user.email
                     }
                   });
                 }
@@ -138,7 +169,7 @@ router.post(`/login`, async (req, res) => {
             }
           }
         );
-      } catch (err) {
+      } catch (err) { // Catch này không bao giờ chạy
         return res.json({ status: false, message: err.message });
       }
 });

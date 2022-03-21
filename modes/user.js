@@ -1,6 +1,7 @@
 const mongoose =require('mongoose');
+const { minimatch } = require('prettier');
+
 const UserSchema =  mongoose.Schema({
-    
     username: {
         type: String,
         unique: true,
@@ -12,8 +13,8 @@ const UserSchema =  mongoose.Schema({
         require: true,
     },
     passwordHash: {
-        type: String,
-        require: true,
+        type:String,
+        required: true,
     },
     isAdmin: {
         type: Boolean,
