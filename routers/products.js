@@ -80,6 +80,8 @@ router.put('/:id', async(req, res)=>{
     return res.status(400).send('Không thể sửa sản phẩm');
     res.send(Product);
 })
+
+
 router.delete('/:id', (req, res) => {
     product.findByIdAndRemove(req.params.id)
         .then((Product) => {
